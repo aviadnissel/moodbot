@@ -12,21 +12,20 @@ class MoodBot():
         self.oauth = oauth
 
     async def run(self):
-        #self.websocket = await websockets.connect('wss://irc-ws.chat.twitch.tv:443')
-        async with websockets.connect('wss://irc-ws.chat.twitch.tv:443') as websocket:
-            await websocket.send(f"PASS {self.oauth}")
-            await websocket.send("NICK moodbottv")
-            greeting = await websocket.recv()
-            await websocket.send(f"JOIN #{self.channel}")
-            join_line = await websocket.recv()
-            names_line = await websocket.recv()
-            while True:
-                line = await websocket.recv()
-                print(line)
-                if line[:4] == "PING":
-                    await self.handle_ping(websocket)
-                else:
-                    self.handle_message(line)
+        self.websocket = await websockets.connect('wss://irc-ws.chat.twitch.tv:443')
+        await self.websocket.send(f"PASS {self.oauth}")
+        await self.websocket.send("NICK moodbottv")
+        greeting = await self.websocket.recv()
+        await self.websocket.send(f"JOIN #{self.channel}")
+        join_line = await self.websocket.recv()
+        names_line = await self.websocket.recv()
+        while True:
+            line = await self.websocket.recv()
+            print(line)
+            if line[:4] == "PING":
+                await self.handle_ping()
+            else:
+                self.handle_message(line)
         
     def parse_message(self, line):
         parts = line.split(":")
@@ -34,9 +33,9 @@ class MoodBot():
         message = parts[-1].replace("\n", "")
         return user, message
 
-    async def handle_ping(self, websocket):
+    async def handle_ping(self):
         print("Ping recieved")
-        await websocket.send("PONG :tmi.twitch.tv")
+        await self.websocket.send("PONG :tmi.twitch.tv")
         print("Pong sent")
 
     def handle_message(self, line):
