@@ -19,17 +19,23 @@ class MoodBot():
         self.oauth = oauth
         self.average_seconds = average_seconds
         self.messages = []
-        self.average = 0
+        self.long_average = 0
+        self.short_average = 0
         self.start_time = datetime.datetime.now()
 
     async def calculate_average(self):
         while True:
             await asyncio.sleep(max(self.average_seconds / 100, 5))
             now = datetime.datetime.now()
-            self.messages = [m for m in self.messages if (m.time - now).seconds > self.average_seconds]
-            seconds = min(self.average_seconds, (now - self.start_time).seconds)
-            self.average = len(self.messages) / seconds
-            print(f"Average per second is {self.average}, seconds to calculate is {seconds}")
+            long_seconds = min(self.average_seconds, (now - self.start_time).seconds)
+            self.messages = [m for m in self.messages if (now - m.time).seconds < long_seconds]
+            self.long_average = len(self.messages) / long_seconds
+
+            short_seconds = max(self.average_seconds / 100, 1)
+            short_messages = [m for m in self.messages if (now - m.time).seconds < short_seconds]
+            self.short_average = len(short_messages) / short_seconds
+            diff = self.short_average - self.long_average
+            print(f"Long average {round(self.long_average, 2)}, Short average {round(self.short_average, 2)}, Diff {round(diff, 2)}")
 
     async def run(self):
         self.websocket = await websockets.connect('wss://irc-ws.chat.twitch.tv:443')
@@ -69,10 +75,13 @@ def main():
     cfg = json.loads(open("bot.cfg", "rb").read())
     oauth = cfg["OAuth"]
     if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} <channel_name>")
+        print(f"Usage: {sys.argv[0]} <channel_name> [timeframe]")
         exit(1)
     channel = sys.argv[1]
-    moodbot = MoodBot(channel, oauth, 600)
+    timeframe = 600
+    if len(sys.argv) > 2:
+        timeframe = int(sys.argv[2])
+    moodbot = MoodBot(channel, oauth, timeframe)
     loop = asyncio.get_event_loop()
     loop.create_task(moodbot.calculate_average())
     loop.run_until_complete(moodbot.run())
