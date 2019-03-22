@@ -40,12 +40,12 @@ class MoodBot():
             self.messages = [m for m in self.messages if (now - m.time).seconds < long_seconds]
             self.long_average = len(self.messages) / long_seconds
 
-            short_seconds = min(self.average_seconds / 50, (now - self.start_time).seconds)
+            short_seconds = min(self.average_seconds / 100, (now - self.start_time).seconds)
             short_seconds = max(short_seconds, 1)
             short_messages = [m for m in self.messages if (now - m.time).seconds < short_seconds]
             self.short_average = len(short_messages) / short_seconds
             diff = self.short_average - self.long_average
-#            print(f"Long average {round(self.long_average, 2)}, Short average {round(self.short_average, 2)}, Diff {round(diff, 2)}")
+            print(f"Long average {round(self.long_average, 2)}, Short average {round(self.short_average, 2)}, Diff {round(diff, 2)}")
 
     async def read_messages(self):
         self.websocket = await websockets.connect('wss://irc-ws.chat.twitch.tv:443')
@@ -66,9 +66,7 @@ class MoodBot():
         names_line = await self.websocket.recv()
 
     async def handle_ping(self):
-        print("Ping recieved")
         await self.websocket.send("PONG :tmi.twitch.tv")
-        print("Pong sent")
 
     def handle_message(self, line):
         user, message_text = self.parse_message(line)
