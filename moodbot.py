@@ -19,14 +19,16 @@ class MoodBot():
         self.average_seconds = average_seconds
         self.messages = []
         self.average = 0
+        self.start_time = datetime.datetime.now()
 
     async def calculate_average(self):
         while True:
             await asyncio.sleep(max(self.average_seconds / 100, 5))
             now = datetime.datetime.now()
             self.messages = [m for m in self.messages if (m.time - now).seconds > self.average_seconds]
-            self.average = len(self.messages) / self.average_seconds
-            print(f"Average per second is {self.average}")
+            seconds = min(self.average_seconds, (now - self.start_time).seconds)
+            self.average = len(self.messages) / seconds
+            print(f"Average per second is {self.average}, seconds to calculate is {seconds}")
 
     async def run(self):
         self.websocket = await websockets.connect('wss://irc-ws.chat.twitch.tv:443')
