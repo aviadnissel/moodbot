@@ -13,12 +13,7 @@ class MoodBot():
 
     async def run(self):
         self.websocket = await websockets.connect('wss://irc-ws.chat.twitch.tv:443')
-        await self.websocket.send(f"PASS {self.oauth}")
-        await self.websocket.send("NICK moodbottv")
-        greeting = await self.websocket.recv()
-        await self.websocket.send(f"JOIN #{self.channel}")
-        join_line = await self.websocket.recv()
-        names_line = await self.websocket.recv()
+        await self.connect_and_join()
         while True:
             line = await self.websocket.recv()
             print(line)
@@ -26,7 +21,15 @@ class MoodBot():
                 await self.handle_ping()
             else:
                 self.handle_message(line)
-        
+
+    async def connect_and_join(self):
+        await self.websocket.send(f"PASS {self.oauth}")
+        await self.websocket.send("NICK moodbottv")
+        greeting = await self.websocket.recv()
+        await self.websocket.send(f"JOIN #{self.channel}")
+        join_line = await self.websocket.recv()
+        names_line = await self.websocket.recv()
+
     async def handle_ping(self):
         print("Ping recieved")
         await self.websocket.send("PONG :tmi.twitch.tv")
