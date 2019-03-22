@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import sys
 import json
 import asyncio
 import websockets
@@ -35,7 +36,6 @@ class MoodBot():
         await self.connect_and_join()
         while True:
             line = await self.websocket.recv()
-            print(line)
             if line[:4] == "PING":
                 await self.handle_ping()
             else:
@@ -68,7 +68,11 @@ class MoodBot():
 def main():
     cfg = json.loads(open("bot.cfg", "rb").read())
     oauth = cfg["OAuth"]
-    moodbot = MoodBot("danielfenner", oauth, 600)
+    if len(sys.argv) < 2:
+        print(f"Usage: {sys.argv[0]} <channel_name>")
+        exit(1)
+    channel = sys.argv[1]
+    moodbot = MoodBot(channel, oauth, 600)
     loop = asyncio.get_event_loop()
     loop.create_task(moodbot.calculate_average())
     loop.run_until_complete(moodbot.run())
