@@ -23,9 +23,19 @@ class MoodBot():
         self.short_average = 0
         self.start_time = datetime.datetime.now()
 
+    async def print_volume(self):
+        while True:
+            await asyncio.sleep(1)
+            volume = 0
+            if self.long_average != 0:
+                volume = (self.short_average - (self.long_average / 2)) / self.long_average
+                print(volume, self.long_average * 1.5, self.short_average, self.long_average / 2)
+                volume = min(int(round(volume * 10)), 10)
+            print("[" + ("=" * volume).ljust(10) + "]")
+
     async def calculate_average(self):
         while True:
-            await asyncio.sleep(max(self.average_seconds / 100, 5))
+            await asyncio.sleep(max(self.average_seconds / 100, 1))
             now = datetime.datetime.now()
             long_seconds = min(self.average_seconds, (now - self.start_time).seconds)
             self.messages = [m for m in self.messages if (now - m.time).seconds < long_seconds]
@@ -35,9 +45,9 @@ class MoodBot():
             short_messages = [m for m in self.messages if (now - m.time).seconds < short_seconds]
             self.short_average = len(short_messages) / short_seconds
             diff = self.short_average - self.long_average
-            print(f"Long average {round(self.long_average, 2)}, Short average {round(self.short_average, 2)}, Diff {round(diff, 2)}")
+#            print(f"Long average {round(self.long_average, 2)}, Short average {round(self.short_average, 2)}, Diff {round(diff, 2)}")
 
-    async def run(self):
+    async def read_messages(self):
         self.websocket = await websockets.connect('wss://irc-ws.chat.twitch.tv:443')
         await self.connect_and_join()
         while True:
@@ -84,7 +94,8 @@ def main():
     moodbot = MoodBot(channel, oauth, timeframe)
     loop = asyncio.get_event_loop()
     loop.create_task(moodbot.calculate_average())
-    loop.run_until_complete(moodbot.run())
+    loop.create_task(moodbot.print_volume())
+    loop.run_until_complete(moodbot.read_messages())
 
 if __name__ == '__main__':
     main()
