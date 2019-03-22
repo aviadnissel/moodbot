@@ -28,8 +28,9 @@ class MoodBot():
             await asyncio.sleep(1)
             volume = int(self.short_average)
             if self.long_average != 0:
-                volume = (self.short_average - (self.long_average / 2)) / self.long_average
-                volume = min(int(round(volume * 10)), 10)
+                volume = 5 + 10 * ((self.short_average - self.long_average) / self.long_average)
+                volume = min(int(round(volume)), 10)
+                #print(volume)
             print("[" + ("=" * volume).ljust(10) + "]")
 
     async def calculate_average(self):
@@ -40,12 +41,12 @@ class MoodBot():
             self.messages = [m for m in self.messages if (now - m.time).seconds < long_seconds]
             self.long_average = len(self.messages) / long_seconds
 
-            short_seconds = min(self.average_seconds / 100, (now - self.start_time).seconds)
+            short_seconds = min(self.average_seconds / 20, (now - self.start_time).seconds)
             short_seconds = max(short_seconds, 1)
             short_messages = [m for m in self.messages if (now - m.time).seconds < short_seconds]
             self.short_average = len(short_messages) / short_seconds
             diff = self.short_average - self.long_average
-            print(f"Long average {round(self.long_average, 2)}, Short average {round(self.short_average, 2)}, Diff {round(diff, 2)}")
+            #print(f"Long average {round(self.long_average, 2)}, Short average {round(self.short_average, 2)}, Diff {round(diff, 2)}")
 
     async def read_messages(self):
         self.websocket = await websockets.connect('wss://irc-ws.chat.twitch.tv:443')
@@ -86,7 +87,7 @@ def main():
         print(f"Usage: {sys.argv[0]} <channel_name> [timeframe]")
         exit(1)
     channel = sys.argv[1]
-    timeframe = 600
+    timeframe = 120
     if len(sys.argv) > 2:
         timeframe = int(sys.argv[2])
     moodbot = MoodBot(channel, oauth, timeframe)
