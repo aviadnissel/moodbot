@@ -6,10 +6,27 @@ import websockets
 import datetime
 import csv
 
+class Message():
+    def __init__(self, time, user, message):
+        self.time = time
+        self.user = user
+        self.message = message
+
 class MoodBot():
-    def __init__(self, channel, oauth):
+    def __init__(self, channel, oauth, average_seconds):
         self.channel = channel
         self.oauth = oauth
+        self.average_seconds = average_seconds
+        self.messages = []
+        self.average = 0
+
+    async def calculate_average(self):
+        while True:
+            await asyncio.sleep(max(self.average_seconds / 100, 5))
+            now = datetime.datetime.now()
+            self.messages = [m for m in self.messages if (m.time - now).seconds > self.average_seconds]
+            self.average = len(self.messages) / self.average_seconds
+            print(f"Average per second is {self.average}")
 
     async def run(self):
         self.websocket = await websockets.connect('wss://irc-ws.chat.twitch.tv:443')
@@ -36,10 +53,9 @@ class MoodBot():
         print("Pong sent")
 
     def handle_message(self, line):
-        f = open("messages.csv", "ab")
-        user, message = self.parse_message(line)
-        f.write(bytes(str(datetime.datetime.now()) + "," + user + "," + message + "\n", "utf8"))
-        f.close()
+        user, message_text = self.parse_message(line)
+        message = Message(datetime.datetime.now(), user, message_text)
+        self.messages.append(message)
 
     def parse_message(self, line):
         parts = line.split(":")
@@ -47,11 +63,13 @@ class MoodBot():
         message = parts[-1].replace("\n", "")
         return user, message
 
-async def main():
+def main():
     cfg = json.loads(open("bot.cfg", "rb").read())
     oauth = cfg["OAuth"]
-    moodbot = MoodBot("danielfenner", oauth)
-    await moodbot.run()
+    moodbot = MoodBot("danielfenner", oauth, 600)
+    loop = asyncio.get_event_loop()
+    loop.create_task(moodbot.calculate_average())
+    loop.run_until_complete(moodbot.run())
 
 if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(main())
+    main()
