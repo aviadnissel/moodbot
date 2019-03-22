@@ -27,12 +27,6 @@ class MoodBot():
             else:
                 self.handle_message(line)
         
-    def parse_message(self, line):
-        parts = line.split(":")
-        user = parts[1].split("!")[0]
-        message = parts[-1].replace("\n", "")
-        return user, message
-
     async def handle_ping(self):
         print("Ping recieved")
         await self.websocket.send("PONG :tmi.twitch.tv")
@@ -44,6 +38,12 @@ class MoodBot():
         f.write(bytes(str(datetime.datetime.now()) + "," + user + "," + message + "\n", "utf8"))
         f.close()
 
+    def parse_message(self, line):
+        parts = line.split(":")
+        user = parts[1].split("!")[0]
+        message = parts[-1].replace("\n", "")
+        return user, message
+
 async def main():
     cfg = json.loads(open("bot.cfg", "rb").read())
     oauth = cfg["OAuth"]
@@ -51,5 +51,4 @@ async def main():
     await moodbot.run()
 
 if __name__ == '__main__':
-    #main()
     asyncio.get_event_loop().run_until_complete(main())
