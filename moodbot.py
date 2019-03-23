@@ -61,10 +61,24 @@ class MoodBot():
 
             short_seconds = min(self.average_seconds / 20, (now - self.start_time).seconds)
             short_seconds = max(short_seconds, 1)
-            short_messages = [m for m in self.messages if (now - m.time).seconds < short_seconds]
-            self.short_average = len(short_messages) / short_seconds
-            diff = self.short_average - self.long_average
+            self.short_messages = [m for m in self.messages if (now - m.time).seconds < short_seconds]
+            self.short_average = len(self.short_messages) / short_seconds
+            #diff = self.short_average - self.long_average
             #print(f"Long average {round(self.long_average, 2)}, Short average {round(self.short_average, 2)}, Diff {round(diff, 2)}")
+
+    async def calculate_common_words(self):
+        while True:
+            await asyncio.sleep(1) # 10
+            words = {}
+            for message in self.short_messages:
+                for word in message.message.split(" "):
+                    words[word] = words.get(word, 0) + 1
+            if len(words) < 3:
+                continue
+            sorted_words = sorted(words.items(), key=lambda x: x[1], reverse=True)
+            print(f"Top word: {sorted_words[0][0]} with {sorted_words[0][1]}")
+            print(f"Second word: {sorted_words[1][0]} with {sorted_words[1][1]}")
+            print(f"Third word: {sorted_words[2][0]} with {sorted_words[2][1]}")
 
     async def read_messages(self):
         self.websocket = await websockets.connect('wss://irc-ws.chat.twitch.tv:443')
@@ -95,7 +109,7 @@ class MoodBot():
     def parse_message(self, line):
         parts = line.split(":")
         user = parts[1].split("!")[0]
-        message = parts[-1].replace("\n", "")
+        message = parts[-1].replace("\n", "").replace("\r", "")
         return user, message
 
 def main():
@@ -111,6 +125,7 @@ def main():
     moodbot = MoodBot(channel, oauth, timeframe)
     loop = asyncio.get_event_loop()
     loop.create_task(moodbot.calculate_average())
+    loop.create_task(moodbot.calculate_common_words())
     loop.create_task(moodbot.print_volume())
     loop.run_until_complete(moodbot.read_messages())
 
