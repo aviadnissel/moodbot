@@ -6,6 +6,19 @@ import asyncio
 import websockets
 import datetime
 import csv
+from termcolor import colored
+
+COLORS = {0: 'red',
+          1: 'red',
+          2: 'red',
+          3: 'yellow',
+          4: 'yellow',
+          5: 'yellow',
+          6: 'yellow',
+          7: 'yellow',
+          8: 'green',
+          9: 'green',
+          10: 'green'}
 
 class Message():
     def __init__(self, time, user, message):
@@ -35,7 +48,8 @@ class MoodBot():
                 self.current_volume = min(target_volume, self.current_volume + 2, 10)
             elif target_volume < self.current_volume:
                 self.current_volume = max(target_volume, self.current_volume - 1, 0)
-            print("[" + ("=" * self.current_volume).ljust(10) + "]")
+            volume_text = ("=" * self.current_volume).ljust(10)
+            print("[" + colored(volume_text, COLORS[self.current_volume]) + "]")
 
     async def calculate_average(self):
         while True:
