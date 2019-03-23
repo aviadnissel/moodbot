@@ -45,7 +45,7 @@ class MoodBot():
                 target_volume = 5 + 10 * ((self.short_average - self.long_average) / self.long_average)
                 target_volume = min(int(round(target_volume)), 10)
             if target_volume > self.current_volume:
-                self.current_volume = min(target_volume, self.current_volume + 2, 10)
+                self.current_volume = min(target_volume, self.current_volume + 3, 10)
             elif target_volume < self.current_volume:
                 self.current_volume = max(target_volume, self.current_volume - 1, 0)
             volume_text = ("=" * self.current_volume).ljust(10)
