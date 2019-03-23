@@ -21,17 +21,21 @@ class MoodBot():
         self.messages = []
         self.long_average = 0
         self.short_average = 0
+        self.current_volume = 0
         self.start_time = datetime.datetime.now()
 
     async def print_volume(self):
         while True:
             await asyncio.sleep(1)
-            volume = int(self.short_average)
+            target_volume = int(self.short_average)
             if self.long_average != 0:
-                volume = 5 + 10 * ((self.short_average - self.long_average) / self.long_average)
-                volume = min(int(round(volume)), 10)
-                #print(volume)
-            print("[" + ("=" * volume).ljust(10) + "]")
+                target_volume = 5 + 10 * ((self.short_average - self.long_average) / self.long_average)
+                target_volume = min(int(round(target_volume)), 10)
+            if target_volume > self.current_volume:
+                self.current_volume = min(target_volume, self.current_volume + 2, 10)
+            elif target_volume < self.current_volume:
+                self.current_volume = max(target_volume, self.current_volume - 1, 0)
+            print("[" + ("=" * self.current_volume).ljust(10) + "]")
 
     async def calculate_average(self):
         while True:
